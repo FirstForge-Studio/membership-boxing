@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boxing Club Admin Upload</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt&display=swap" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -86,6 +86,17 @@
       cursor: not-allowed;
     }
 
+    #qrPreview {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #qrImage {
+      max-width: 300px;
+      display: none;
+      border-radius: 12px;
+    }
+
     #loadingPopup {
       display: none;
       position: fixed;
@@ -133,10 +144,10 @@
   <h1>Boxing Club Admin Upload</h1>
   <form class="upload-form" id="adminForm">
     <label for="studentId">Student ID</label>
-    <input type="text" id="studentId" placeholder="Enter Student ID" required>
+    <input type="text" id="studentId" placeholder="Enter Student ID" required />
 
     <label for="name">Name</label>
-    <input type="text" id="name" placeholder="Enter Full Name" required>
+    <input type="text" id="name" placeholder="Enter Full Name" required />
 
     <label for="package">Package</label>
     <select id="package">
@@ -145,8 +156,12 @@
       <option value="50 THB/session">🎟️ 50 THB/session</option>
     </select>
 
+    <div id="qrPreview">
+      <img id="qrImage" src="" alt="QR Code" />
+    </div>
+
     <label for="receipt">Upload Receipt</label>
-    <input type="file" id="receipt" accept="image/*" required>
+    <input type="file" id="receipt" accept="image/*" required />
 
     <button type="submit" id="submitBtn">Submit</button>
   </form>
@@ -161,22 +176,48 @@
   </div>
 
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws0jnPH2Gx0lFtIftlhysevuuD6IIudU5mH5JyAJaFA_VHPMJ-fHvxbO3hDZbnZrqx/exec";
+    const GOOGLE_SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbws0jnPH2Gx0lFtIftlhysevuuD6IIudU5mH5JyAJaFA_VHPMJ-fHvxbO3hDZbnZrqx/exec";
 
-    document.getElementById('adminForm').addEventListener('submit', function (e) {
+    const qrImage = document.getElementById("qrImage");
+    const packageSelect = document.getElementById("package");
+
+    const qrMap = {
+      "100 THB/month": "100-bath.jpg",
+      "60 THB/month": "60-bath.jpg",
+      "50 THB/session": null,
+    };
+
+    packageSelect.addEventListener("change", () => {
+      const selected = packageSelect.value;
+      const qrSrc = qrMap[selected];
+      if (qrSrc) {
+        qrImage.src = qrSrc;
+        qrImage.style.display = "inline-block";
+      } else {
+        qrImage.style.display = "none";
+      }
+    });
+
+    // Load default QR
+    window.addEventListener("DOMContentLoaded", () => {
+      packageSelect.dispatchEvent(new Event("change"));
+    });
+
+    document.getElementById("adminForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
-      const studentId = document.getElementById('studentId').value;
-      const name = document.getElementById('name').value;
-      const packageType = document.getElementById('package').value;
-      const fileInput = document.getElementById('receipt');
-      const submitBtn = document.getElementById('submitBtn');
+      const studentId = document.getElementById("studentId").value;
+      const name = document.getElementById("name").value;
+      const packageType = packageSelect.value;
+      const fileInput = document.getElementById("receipt");
+      const submitBtn = document.getElementById("submitBtn");
       const loadingPopup = document.getElementById("loadingPopup");
       const loadingText = document.getElementById("loadingText");
       const progressFill = document.getElementById("progressFill");
 
       if (!fileInput.files.length) {
-        alert('Please upload a receipt.');
+        alert("Please upload a receipt.");
         return;
       }
 
@@ -197,9 +238,8 @@
       const reader = new FileReader();
 
       reader.onloadend = async function () {
-        const base64Data = reader.result.split(',')[1];
+        const base64Data = reader.result.split(",")[1];
         const formData = new URLSearchParams();
-
         formData.append("studentId", studentId);
         formData.append("name", name);
         formData.append("package", packageType);
@@ -207,11 +247,11 @@
 
         try {
           const res = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
+              "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: formData
+            body: formData,
           });
 
           const text = await res.text();
@@ -220,7 +260,6 @@
           clearInterval(progressInterval);
           progressFill.style.width = "100%";
           loadingText.innerText = "✅ Completed!";
-
         } catch (error) {
           clearInterval(progressInterval);
           loadingText.innerText = "❌ Error occurred";
